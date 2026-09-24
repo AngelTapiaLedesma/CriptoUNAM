@@ -1,82 +1,93 @@
-# PatchProof 🔐
+# 🔗 PatchProof - Módulo Blockchain (Stellar Testnet)
 
-**A verifiable bug bounty platform powered by Stellar**
+Este submódulo maneja toda la lógica descentralizada de PatchProof usando la red de prueba de Stellar. Provee funciones listas para ser consumidas por el backend (FastAPI) sin necesidad de interactuar directamente con la blockchain o programar smart contracts.
 
-PatchProof es una plataforma para gestionar programas de **bug bounty** de forma más transparente entre empresas e investigadores de seguridad.
+## ⚙️ Requisitos previos (Para Persona 1 - Backend)
 
-La idea parte de un problema de confianza: un investigador necesita tener evidencia de que su reporte fue recibido y que la recompensa prometida existe, mientras que una empresa necesita gestionar estos reportes sin exponer información sensible sobre sus sistemas.
+Asegúrate de instalar las dependencias necesarias en el entorno virtual donde esté corriendo FastAPI:
 
-PatchProof utiliza **Stellar** como una capa de verificación para registrar eventos importantes del proceso, como el envío de un reporte, su validación y el pago de una recompensa.
+```bash
+pip install stellar-sdk python-dotenv
 
-La vulnerabilidad completa nunca se publica en blockchain. En su lugar, se genera una huella criptográfica del reporte que permite comprobar su existencia sin revelar su contenido.
-
----
-
-## 💡 ¿Cómo funciona?
-
-```text
-Empresa crea un bounty
-        ↓
-Investigador envía un reporte
-        ↓
-PatchProof genera evidencia verificable
-        ↓
-El reporte es validado
-        ↓
-Se libera la recompensa
-        ↓
-La vulnerabilidad puede marcarse como corregida
 ```
 
-El objetivo es crear un historial verificable del ciclo de vida de una vulnerabilidad sin depender únicamente de la confianza entre ambas partes.
+## 🔐 Variables de Entorno (`.env`)
 
----
+Debes crear un archivo `.env` en la raíz del backend con las llaves de prueba. **(Las llaves reales te las pasaré por mensaje privado, NO las subas a GitHub para no perder puntos en evaluación técnica):**
 
-## ⚙️ Tecnologías
+```env
+SECRET_EMPRESA="S_LLAVE_SECRETA_DE_LA_EMPRESA"
+PUBLIC_INVESTIGADOR="G_LLAVE_PUBLICA_DEL_INVESTIGADOR"
 
-El proyecto está siendo desarrollado con:
-
-- **React + Vite** para la interfaz.
-- **Python + FastAPI** para el backend.
-- **Stellar Testnet** para las operaciones blockchain.
-- **Stellar SDK** para la integración con la red.
-- **Soroban** para smart contracts.
-- **SQLite** para el almacenamiento del MVP.
-- **GitHub** para colaboración y control de versiones.
-
----
-
-## 🧩 Arquitectura general
-
-```mermaid
-flowchart LR
-    A[Frontend<br/>React] --> B[Backend<br/>FastAPI]
-    B --> C[(Database)]
-    B --> D[Stellar Testnet]
-    D --> E[Smart Contract]
 ```
 
----
+## 🚀 Guía de Integración (`stellar_service.py`)
 
-## 🚀 MVP
+A continuación se detalla dónde y cómo invocar cada función dentro de los endpoints de FastAPI para cumplir el flujo del MVP.
 
-Para el hackathon buscamos demostrar un flujo funcional donde:
+### 1. Crear Escrow (Fondos Comprometidos)
 
-1. una empresa publica un bounty;
-2. un investigador envía un reporte;
-3. PatchProof genera y registra evidencia del reporte;
-4. el reporte es validado;
-5. la recompensa se libera mediante Stellar Testnet;
-6. el estado del proceso puede consultarse desde la plataforma.
+* **Dónde usarlo:** En el endpoint `POST /bounties` (Cuando la EMPRESA crea un programa).
+* **Qué hace:** Genera una wallet temporal (Escrow) y la fondea con el monto de la recompensa para garantizar la liquidez.
 
----
+```python
+from blockchain.stellar_service import crear_cuenta_escrow
 
-## 🏆 GOYA HACK 2026
+# Retorna un diccionario con: escrow_public, escrow_secret y tx_hash
+escrow_data = crear_cuenta_escrow(SECRET_EMPRESA, "500")
 
-Proyecto desarrollado para **GOYA HACK · Hackathon UNAM 2026**.
+# ⚠️ IMPORTANTE: Debes guardar 'escrow_secret' en la base de datos 
+# asociado a este Bounty, lo necesitaremos para hacer el pago después.
 
-**Track:** Innovación  
-**Equipo:** 4 integrantes  
-**Estado:** 🚧 En desarrollo
+```
 
-Las instrucciones de instalación, ejecución y enlaces de la demo se agregarán conforme avance el proyecto.
+### 2. Registrar Evidencia (Submit Report)
+
+* **Dónde usarlo:** En el endpoint `POST /reports` (Cuando el INVESTIGADOR envía una vulnerabilidad).
+* **Qué hace:** Guarda el SHA-256 del reporte en la blockchain para generar evidencia criptográfica inmutable, manteniendo el contenido real off-chain.
+
+```python
+from blockchain.stellar_service import registrar_evidencia_en_blockchain
+
+# Retorna el ID de la transacción en Stellar (str)
+tx_evidencia = registrar_evidencia_en_blockchain(SECRET_EMPRESA, hash_del_reporte_generado)
+
+# Guarda tx_evidencia en la BD asociado al Reporte para mostrarlo en el Frontend
+
+```
+
+### 3. Liberar Pago (Triager Validate)
+
+* **Dónde usarlo:** En el endpoint `POST /reports/{id}/validate` (Cuando el TRIAGER aprueba el reporte).
+* **Qué hace:** Transfiere los fondos desde la cuenta Escrow hacia la wallet del Investigador.
+
+```python
+from blockchain.stellar_service import pagar_recompensa_desde_escrow
+
+# Recupera el escrow_secret de la BD y ejecuta el pago
+tx_pago = pagar_recompensa_desde_escrow(escrow_secret_bd, PUBLIC_INVESTIGADOR, "500")
+
+```
+
+### 4. Prueba de Remediación (Proof of Remediation)
+
+* **Dónde usarlo:** En el endpoint `POST /reports/{id}/remediate` (Cuando la EMPRESA soluciona el fallo).
+* **Qué hace:** Registra un nuevo hash en la red certificando que el reporte original fue parcheado, cerrando el ciclo.
+
+```python
+from blockchain.stellar_service import registrar_proof_of_remediation
+
+tx_remediation = registrar_proof_of_remediation(SECRET_EMPRESA, hash_del_reporte_original)
+
+```
+
+## 🧪 Pruebas locales (Para Persona 4 - QA/Integración)
+
+Si necesitan verificar que el entorno de Stellar funciona correctamente antes de levantar el servidor FastAPI, simplemente ejecuten el script de pruebas en la terminal:
+
+```bash
+python test_flujo.py
+
+```
+
+El script ejecutará el ciclo completo y devolverá URLs directas al explorador de bloques (Stellar Expert) para comprobar que los hashes y pagos se registraron en vivo.
