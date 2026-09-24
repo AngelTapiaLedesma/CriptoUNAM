@@ -1,6 +1,4 @@
-Entendido. Para un hackathon, dejar las llaves de la Testnet (que no tienen dinero real) directamente en el repositorio es un atajo muy común y válido. Esto le va a ahorrar muchos dolores de cabeza a la Persona 1 (Backend) y a la Persona 4 (Integración) porque podrán clonar y correr el proyecto al instante sin estar configurando archivos ocultos.
 
-Aquí tienes el README actualizado, eliminando la configuración del `.env` y aclarando que las credenciales ya vienen listas para usarse.
 
 ---
 
