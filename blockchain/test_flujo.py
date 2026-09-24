@@ -1,26 +1,37 @@
 # Archivo: backend/blockchain/test_flujo.py
 
-from stellar_service import registrar_evidencia_en_blockchain, pagar_recompensa
+from stellar_service import (
+    crear_cuenta_escrow, 
+    registrar_evidencia_en_blockchain, 
+    pagar_recompensa_desde_escrow,
+    registrar_proof_of_remediation
+)
 import hashlib
+import time
 
-# 1. Pega aquí las llaves que te dio tu script anterior (1_crear_wallets.py)
-SECRET_EMPRESA = "SCXWDP34FAMJPEX4HNJ4HF2NUY3LSVLHNMFF5ADYF6YD7WDFMGE3LAGD"
-PUBLIC_INVESTIGADOR = "GD72X6PTJY7OI6CZLFWPRYPGPZUNXHQVRN2VYWNPYZOSQN4Q4TN2GVXT"
+# Usa las llaves que generamos en el paso 1 (las que tienen 10,000 XLM)
+SECRET_EMPRESA = "SAFTQHDFS3GLSYQ2KMVLDLZRESNHOKK55I3HTPMYHKLFGRBZDAUPRX6V"
+PUBLIC_INVESTIGADOR = "GCRW23YCSJGBHQEBTTFLQKW26LQ6GJBZ5PFWE64SCZQK7SGNWCQKUUTE"
 
-print("\n--- SIMULANDO FLUJO DE PATCHPROOF ---")
+monto_recompensa = "500"
 
-# 2. Simulamos que la Persona 1 (Backend) recibe un reporte y genera el SHA-256
-reporte_falso = "Vulnerabilidad XSS en el login de la empresa."
-# Creamos el hash (debe ser de 64 caracteres exactos en hexadecimal)
-hash_del_reporte = hashlib.sha256(reporte_falso.encode()).hexdigest()
-print(f"1️⃣ Hash generado: {hash_del_reporte}")
+print("\n--- 1. EMPRESA CREA BOUNTY (FONDOS COMPROMETIDOS / ESCROW) ---")
+escrow = crear_cuenta_escrow(SECRET_EMPRESA, monto_recompensa)
+print(f"Escrow creado y fondeado. TX: https://stellar.expert/explorer/testnet/tx/{escrow['tx_hash']}")
 
-# 3. Guardamos el hash en Stellar
-print("2️⃣ Registrando evidencia en la blockchain...")
-tx_evidencia = registrar_evidencia_en_blockchain(SECRET_EMPRESA, hash_del_reporte)
-print(f"✅ Evidencia registrada! Ver transacción: https://stellar.expert/explorer/testnet/tx/{tx_evidencia}")
+# Esperamos un poco para que Stellar procese la cuenta
+time.sleep(3)
 
-# 4. Simulamos que el Triager valida y paga
-print("3️⃣ Triager validó el reporte. Pagando 500 TEST-XLM...")
-tx_pago = pagar_recompensa(SECRET_EMPRESA, PUBLIC_INVESTIGADOR, "500")
-print(f"✅ Pago realizado! Ver transacción: https://stellar.expert/explorer/testnet/tx/{tx_pago}")
+print("\n--- 2. INVESTIGADOR REPORTA (EVIDENCIA EN BLOCKCHAIN) ---")
+reporte = "SQL Injection in /login"
+hash_reporte = hashlib.sha256(reporte.encode()).hexdigest()
+tx_evidencia = registrar_evidencia_en_blockchain(SECRET_EMPRESA, hash_reporte)
+print(f"Evidencia registrada. TX: https://stellar.expert/explorer/testnet/tx/{tx_evidencia}")
+
+print("\n--- 3. TRIAGER VALIDA Y PAGA ---")
+tx_pago = pagar_recompensa_desde_escrow(escrow['escrow_secret'], PUBLIC_INVESTIGADOR, monto_recompensa)
+print(f"Pago liberado al investigador. TX: https://stellar.expert/explorer/testnet/tx/{tx_pago}")
+
+print("\n--- 4. EMPRESA CORRIGE EL ERROR (PROOF OF REMEDIATION) ---")
+tx_remediation = registrar_proof_of_remediation(SECRET_EMPRESA, hash_reporte)
+print(f"Certificado de corrección registrado. TX: https://stellar.expert/explorer/testnet/tx/{tx_remediation}")
