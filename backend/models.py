@@ -26,6 +26,7 @@ class Report(Base):
     description = Column(Text)
     severity = Column(String)
     evidence = Column(Text)
+    salt = Column(String)
     hash = Column(String)
     stellar_tx_hash = Column(String, nullable=True)
     status = Column(String, default="SUBMITTED")
