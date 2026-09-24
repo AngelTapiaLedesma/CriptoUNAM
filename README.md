@@ -1,25 +1,27 @@
+Entendido. Para un hackathon, dejar las llaves de la Testnet (que no tienen dinero real) directamente en el repositorio es un atajo muy común y válido. Esto le va a ahorrar muchos dolores de cabeza a la Persona 1 (Backend) y a la Persona 4 (Integración) porque podrán clonar y correr el proyecto al instante sin estar configurando archivos ocultos.
+
+Aquí tienes el README actualizado, eliminando la configuración del `.env` y aclarando que las credenciales ya vienen listas para usarse.
+
+---
+
 # 🔗 PatchProof - Módulo Blockchain (Stellar Testnet)
 
 Este submódulo maneja toda la lógica descentralizada de PatchProof usando la red de prueba de Stellar. Provee funciones listas para ser consumidas por el backend (FastAPI) sin necesidad de interactuar directamente con la blockchain o programar smart contracts.
 
 ## ⚙️ Requisitos previos (Para Persona 1 - Backend)
 
-Asegúrate de instalar las dependencias necesarias en el entorno virtual donde esté corriendo FastAPI:
+Asegúrate de instalar el SDK de Stellar en el entorno virtual donde esté corriendo FastAPI:
 
 ```bash
-pip install stellar-sdk python-dotenv
+pip install stellar-sdk
 
 ```
 
-## 🔐 Variables de Entorno (`.env`)
+## 🔐 Credenciales de Prueba (Testnet)
 
-Debes crear un archivo `.env` en la raíz del backend con las llaves de prueba. **(Las llaves reales te las pasaré por mensaje privado, NO las subas a GitHub para no perder puntos en evaluación técnica):**
+Para agilizar el desarrollo y la integración durante el hackathon, **las llaves de Stellar Testnet se dejaron directamente en el código**. Al ser fondos de prueba sin valor real, esto permite que cualquier miembro del equipo clone el repositorio y ejecute la demo inmediatamente sin necesidad de configurar variables de entorno locales.
 
-```env
-SECRET_EMPRESA="S_LLAVE_SECRETA_DE_LA_EMPRESA"
-PUBLIC_INVESTIGADOR="G_LLAVE_PUBLICA_DEL_INVESTIGADOR"
-
-```
+*Las variables `SECRET_EMPRESA` y `PUBLIC_INVESTIGADOR` ya están definidas y fondeadas dentro de los scripts.*
 
 ## 🚀 Guía de Integración (`stellar_service.py`)
 
@@ -34,6 +36,7 @@ A continuación se detalla dónde y cómo invocar cada función dentro de los en
 from blockchain.stellar_service import crear_cuenta_escrow
 
 # Retorna un diccionario con: escrow_public, escrow_secret y tx_hash
+# Utiliza la variable SECRET_EMPRESA que ya está en el archivo
 escrow_data = crear_cuenta_escrow(SECRET_EMPRESA, "500")
 
 # ⚠️ IMPORTANTE: Debes guardar 'escrow_secret' en la base de datos 
@@ -64,7 +67,7 @@ tx_evidencia = registrar_evidencia_en_blockchain(SECRET_EMPRESA, hash_del_report
 ```python
 from blockchain.stellar_service import pagar_recompensa_desde_escrow
 
-# Recupera el escrow_secret de la BD y ejecuta el pago
+# Recupera el escrow_secret de la BD y ejecuta el pago hacia PUBLIC_INVESTIGADOR
 tx_pago = pagar_recompensa_desde_escrow(escrow_secret_bd, PUBLIC_INVESTIGADOR, "500")
 
 ```
@@ -83,11 +86,11 @@ tx_remediation = registrar_proof_of_remediation(SECRET_EMPRESA, hash_del_reporte
 
 ## 🧪 Pruebas locales (Para Persona 4 - QA/Integración)
 
-Si necesitan verificar que el entorno de Stellar funciona correctamente antes de levantar el servidor FastAPI, simplemente ejecuten el script de pruebas en la terminal:
+Para verificar que la conexión con Stellar Testnet funciona correctamente antes de levantar el servidor FastAPI, ejecuta el script de pruebas en la terminal:
 
 ```bash
 python test_flujo.py
 
 ```
 
-El script ejecutará el ciclo completo y devolverá URLs directas al explorador de bloques (Stellar Expert) para comprobar que los hashes y pagos se registraron en vivo.
+El script ejecutará el ciclo completo y devolverá URLs directas al explorador de bloques (Stellar Expert) para comprobar que los hashes y pagos se registran en vivo.
