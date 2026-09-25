@@ -6,30 +6,38 @@ import Investigator from './pages/Investigator'
 import Triager from './pages/Triager'
 import Company from './pages/Company'
 
-import { mockReports } from './data/mockReports'
+// IMPORTANTE: Importamos tu cliente de API real
+import { getReports } from './services/api' 
 
 function App() {
   const [activeSection, setActiveSection] = useState('dashboard')
 
-  const [reports, setReports] = useState(() => {
-    const savedReports = localStorage.getItem('patchproof-reports')
+  // Iniciamos el estado vacío, esperando los datos reales
+  const [reports, setReports] = useState([])
 
-    return savedReports
-      ? JSON.parse(savedReports)
-      : mockReports
-  })
-
+  // Este useEffect se ejecuta una sola vez al abrir la app
+  // y va a buscar los datos a tu FastAPI (http://127.0.0.1:8000/reports)
   useEffect(() => {
-    localStorage.setItem(
-      'patchproof-reports',
-      JSON.stringify(reports)
-    )
-  }, [reports])
+    const fetchRealData = async () => {
+      try {
+        const data = await getReports()
+        setReports(data)
+      } catch (error) {
+        console.error("Error cargando DB desde backend:", error)
+      }
+    }
+    fetchRealData()
+  }, [])
 
-  const resetDemo = () => {
-    localStorage.removeItem('patchproof-reports')
-    setReports(mockReports)
-    setActiveSection('dashboard')
+  const resetDemo = async () => {
+    // En lugar de borrar local storage, forzamos una recarga desde el backend
+    try {
+      const data = await getReports()
+      setReports(data)
+      setActiveSection('dashboard')
+    } catch (error) {
+      console.error("Error al recargar demo:", error)
+    }
   }
 
   const sections = [
@@ -108,7 +116,7 @@ function App() {
               className="reset-button"
               onClick={resetDemo}
             >
-              Reiniciar demo
+              Recargar datos
             </button>
 
             <div className="user-profile">

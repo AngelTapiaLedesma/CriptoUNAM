@@ -1,25 +1,31 @@
-# Archivo: backend/blockchain/stellar_service.py
+def release_reward(
+    destination: str,
+    amount: str,
+) -> str:
 
-from stellar_sdk import Server, Keypair, TransactionBuilder, Network, HashMemo, Asset
+    raise NotImplementedError(
+        "Stellar integration "
+        "not connected yet"
+    )
+
+# Archivo: backend/stellar.py
+
+from stellar_sdk import Server, Keypair, TransactionBuilder, Network, Asset, HashMemo
 import hashlib
 
 server = Server("https://horizon-testnet.stellar.org")
 NETWORK_PASSPHRASE = Network.TESTNET_NETWORK_PASSPHRASE
 
+# Llaves fijas de Testnet para el MVP
+SECRET_EMPRESA = "SAFTQHDFS3GLSYQ2KMVLDLZRESNHOKK55I3HTPMYHKLFGRBZDAUPRX6V"
+PUBLIC_INVESTIGADOR = "GCRW23YCSJGBHQEBTTFLQKW26LQ6GJBZ5PFWE64SCZQK7SGNWCQKUUTE"
+
 def crear_cuenta_escrow(secret_empresa: str, monto_bounty: str) -> dict:
-    """
-    CUMPLE PUNTO A) ESCROW.
-    Crea una cuenta temporal que retendrá los fondos del bounty.
-    Garantiza que la empresa no pueda gastar ese dinero en otra cosa.
-    """
     try:
         llaves_empresa = Keypair.from_secret(secret_empresa)
         cuenta_empresa = server.load_account(llaves_empresa.public_key)
-        
-        # Generamos la wallet que servirá de Escrow
         escrow_keypair = Keypair.random()
         
-        # La empresa crea y fondea el Escrow con el monto de la recompensa
         tx = (
             TransactionBuilder(
                 source_account=cuenta_empresa,
@@ -28,29 +34,23 @@ def crear_cuenta_escrow(secret_empresa: str, monto_bounty: str) -> dict:
             )
             .append_create_account_op(
                 destination=escrow_keypair.public_key,
-                starting_balance=str(float(monto_bounty) + 2.0) # Monto + reserva mínima de Stellar
+                starting_balance=str(float(monto_bounty) + 2.0)
             )
             .set_timeout(30)
             .build()
         )
-        
         tx.sign(llaves_empresa)
         respuesta = server.submit_transaction(tx)
-        
-        print(f"✅ Escrow fondeado. TX: {respuesta['hash']}")
         return {
             "escrow_public": escrow_keypair.public_key,
             "escrow_secret": escrow_keypair.secret,
             "tx_hash": respuesta["hash"]
         }
     except Exception as e:
-        print(f"❌ Error al crear Escrow: {e}")
+        print(f"Error Escrow: {e}")
         return None
 
 def registrar_evidencia_en_blockchain(secret_empresa: str, hash_reporte: str) -> str:
-    """
-    CUMPLE PUNTO B) EVIDENCIA DEL REPORTE.
-    """
     try:
         llaves_empresa = Keypair.from_secret(secret_empresa)
         cuenta_origen = server.load_account(llaves_empresa.public_key)
@@ -67,52 +67,42 @@ def registrar_evidencia_en_blockchain(secret_empresa: str, hash_reporte: str) ->
                 asset=Asset.native()
             )
             .add_memo(HashMemo(hash_reporte))
-            .set_timeout(30)
+            .set_timeout(300)
             .build()
         )
         tx.sign(llaves_empresa)
         return server.submit_transaction(tx)["hash"]
     except Exception as e:
-        print(f"❌ Error en evidencia: {e}")
+        print(f"Error Evidencia: {e}")
         return None
 
-def pagar_recompensa_desde_escrow(secret_escrow: str, public_investigador: str, monto: str) -> str:
-    """
-    CUMPLE PUNTO D) PAGO.
-    Transfiere los fondos desde la cuenta Escrow al Investigador.
-    """
+def pagar_recompensa_desde_escrow(secret_origen: str, public_destino: str, monto: str) -> str:
     try:
-        llaves_escrow = Keypair.from_secret(secret_escrow)
-        cuenta_escrow = server.load_account(llaves_escrow.public_key)
+        llaves_origen = Keypair.from_secret(secret_origen)
+        cuenta_origen = server.load_account(llaves_origen.public_key)
         
         tx = (
             TransactionBuilder(
-                source_account=cuenta_escrow,
+                source_account=cuenta_origen,
                 network_passphrase=NETWORK_PASSPHRASE,
                 base_fee=100
             )
             .append_payment_op(
-                destination=public_investigador,
+                destination=public_destino,
                 amount=str(monto),
                 asset=Asset.native()
             )
             .set_timeout(30)
             .build()
         )
-        tx.sign(llaves_escrow)
+        tx.sign(llaves_origen)
         return server.submit_transaction(tx)["hash"]
     except Exception as e:
-        print(f"❌ Error en pago: {e}")
+        print(f"Error Pago: {e}")
         return None
 
 def registrar_proof_of_remediation(secret_empresa: str, hash_reporte_original: str) -> str:
-    """
-    CUMPLE PUNTO E) PROOF OF REMEDIATION.
-    Registra que la vulnerabilidad fue parcheada. Usamos el hash original + la palabra 'REMEDIATED'
-    para generar un nuevo hash que certifique la corrección.
-    """
     try:
-        # Generamos un nuevo hash que une el reporte original con la acción de parcheo
         remediation_data = f"REMEDIATED:{hash_reporte_original}"
         remediation_hash = hashlib.sha256(remediation_data.encode()).hexdigest()
 
@@ -137,5 +127,5 @@ def registrar_proof_of_remediation(secret_empresa: str, hash_reporte_original: s
         tx.sign(llaves_empresa)
         return server.submit_transaction(tx)["hash"]
     except Exception as e:
-        print(f"❌ Error en Proof of Remediation: {e}")
+        print(f"Error Proof of Remediation: {e}")
         return None

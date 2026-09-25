@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import ReportTimeline from '../components/ReportTimeline'
-
+import { createReport } from '../services/api'
 function Investigator({ reports, setReports }) {
   const [showForm, setShowForm] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
@@ -27,33 +27,37 @@ function Investigator({ reports, setReports }) {
     })
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => { // <-- Ahora es async
     event.preventDefault()
 
-    const newReport = {
-      id: `PP-${String(reports.length + 1).padStart(3, '0')}`,
-      title: formData.title,
-      company: formData.company,
-      severity: formData.severity,
-      description: formData.description,
-      status: 'SUBMITTED',
-      researcher,
-      submittedAt: '23 Sep 2026',
-      reward: null,
-      evidenceHash: 'Pendiente de registro',
-      transactionHash: null,
+    try {
+      // 1. Mandamos el JSON al backend real
+      const newReport = await createReport({
+        bountyId: 1, // Hardcodeado a 1 para la demo del MVP
+        researcher: researcher,
+        title: formData.title,
+        description: formData.description,
+        severity: formData.severity.toUpperCase(), // FastAPI espera MAYÚSCULAS
+        evidence: "Evidencia enviada desde UI"
+      })
+
+      // 2. Actualizamos la vista con el reporte real que nos devolvió FastAPI
+      // (¡Este reporte ya traerá el transactionHash de Stellar!)
+      setReports([newReport, ...reports])
+
+      // 3. Limpiamos el formulario
+      setFormData({
+        title: '',
+        company: '',
+        severity: 'Medium',
+        description: '',
+      })
+      setShowForm(false)
+
+    } catch (error) {
+      console.error("Error al guardar en blockchain:", error)
+      alert("Error al enviar el reporte. Revisa la consola.")
     }
-
-    setReports([newReport, ...reports])
-
-    setFormData({
-      title: '',
-      company: '',
-      severity: 'Medium',
-      description: '',
-    })
-
-    setShowForm(false)
   }
 
   return (

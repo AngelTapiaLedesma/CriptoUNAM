@@ -1,3 +1,4 @@
+import { updateReportStatus } from '../services/api' 
 function Triager({ reports, setReports }) {
   const pendingReports = reports.filter(
     (report) => report.status === 'SUBMITTED'
@@ -7,24 +8,38 @@ function Triager({ reports, setReports }) {
     (report) => report.status === 'REMEDIATED'
   )
 
-  const validateReport = (reportId) => {
-    const updatedReports = reports.map((report) =>
-      report.id === reportId
-        ? { ...report, status: 'VALIDATED' }
-        : report
-    )
+  const validateReport = async (reportId) => {
+    try {
+      // 1. Le avisa al backend que el reporte es válido (y dispara el PAGO)
+      const updatedReport = await updateReportStatus(reportId, 'VALIDATED')
+      
+      // (Opcional para la demo) Forzamos el estado a PAID directamente 
+      // si tu backend ya hizo el pago en Stellar durante el VALIDATED.
+      // Si tu backend requiere un segundo paso para PAID, ajusta aquí.
+      const finalReport = await updateReportStatus(reportId, 'PAID')
 
-    setReports(updatedReports)
+      // 2. Actualizamos la lista local
+      const updatedReports = reports.map((report) =>
+        report.id === reportId ? finalReport : report
+      )
+      setReports(updatedReports)
+    } catch (error) {
+      console.error("Error en validación/pago:", error)
+    }
   }
 
-  const verifyReport = (reportId) => {
-    const updatedReports = reports.map((report) =>
-      report.id === reportId
-        ? { ...report, status: 'VERIFIED' }
-        : report
-    )
+  const verifyReport = async (reportId) => {
+    try {
+      // Cierra el ciclo confirmando la remediación
+      const updatedReport = await updateReportStatus(reportId, 'VERIFIED')
 
-    setReports(updatedReports)
+      const updatedReports = reports.map((report) =>
+        report.id === reportId ? updatedReport : report
+      )
+      setReports(updatedReports)
+    } catch (error) {
+      console.error("Error en verificación final:", error)
+    }
   }
 
   return (
