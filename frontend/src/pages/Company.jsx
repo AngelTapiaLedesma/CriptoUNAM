@@ -1,4 +1,5 @@
 import { updateReportStatus } from '../services/api'
+
 function Company({ reports, setReports }) {
   const company = 'Fintech Corp'
 
@@ -6,41 +7,43 @@ function Company({ reports, setReports }) {
     (report) => report.company === company
   )
 
-  const rewardBySeverity = {
-    Critical: 850,
-    High: 500,
-    Medium: 250,
-    Low: 100,
-  }
+  const payReward = async (reportId) => {
+    try {
+      const updatedReport = await updateReportStatus(
+        reportId,
+        'PAID'
+      )
 
-  const payReward = (reportId) => {
-    const updatedReports = reports.map((report) =>
-      report.id === reportId
-        ? {
-            ...report,
-            status: 'PAID',
-            reward: rewardBySeverity[report.severity],
-            transactionHash: `tx-${Date.now().toString(16)}`,
-          }
-        : report
-    )
-
-    setReports(updatedReports)
+      setReports((currentReports) =>
+        currentReports.map((report) =>
+          report.id === reportId
+            ? updatedReport
+            : report
+        )
+      )
+    } catch (error) {
+      console.error(error)
+      alert('No se pudo procesar el pago')
+    }
   }
 
   const markRemediated = async (reportId) => {
     try {
-      // 1. Le avisamos a FastAPI y a la Blockchain
-      const updatedReport = await updateReportStatus(reportId, 'REMEDIATED')
-
-      // 2. Actualizamos la memoria de React con la respuesta real del servidor
-      const updatedReports = reports.map((report) =>
-        report.id === reportId ? updatedReport : report
+      const updatedReport = await updateReportStatus(
+        reportId,
+        'REMEDIATED'
       )
-      
-      setReports(updatedReports)
+
+      setReports((currentReports) =>
+        currentReports.map((report) =>
+          report.id === reportId
+            ? updatedReport
+            : report
+        )
+      )
     } catch (error) {
-      console.error("Error al marcar como remediada:", error)
+      console.error(error)
+      alert('No se pudo marcar como remediada')
     }
   }
 
@@ -50,6 +53,7 @@ function Company({ reports, setReports }) {
       <div className="page-heading">
         <div>
           <p className="section-label">Empresa</p>
+
           <h2>Vulnerabilidades de {company}</h2>
 
           <p className="section-description">
@@ -66,7 +70,10 @@ function Company({ reports, setReports }) {
       <div className="company-reports">
 
         {companyReports.map((report) => (
-          <div className="company-report-card" key={report.id}>
+          <div
+            className="company-report-card"
+            key={report.id}
+          >
 
             <div className="company-report-header">
 
@@ -104,11 +111,13 @@ function Company({ reports, setReports }) {
             <div className="company-report-info">
 
               <div>
-                <span className="info-label">Recompensa</span>
+                <span className="info-label">
+                  Recompensa
+                </span>
 
                 <strong>
                   {report.reward
-                    ? `${report.reward} XLM`
+                    ? report.reward
                     : 'Pendiente'}
                 </strong>
               </div>

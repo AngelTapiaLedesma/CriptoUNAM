@@ -1,5 +1,3 @@
-
-
 function Dashboard({ reports }) {
   const totalReports = reports.length
 
@@ -12,7 +10,8 @@ function Dashboard({ reports }) {
   ).length
 
   const totalRewards = reports.reduce(
-    (total, report) => total + (report.reward || 0),
+    (total, report) =>
+      total + (parseFloat(report.reward) || 0),
     0
   )
 
@@ -35,25 +34,35 @@ function Dashboard({ reports }) {
         <div className="stat-card">
           <span className="stat-label">Reportes totales</span>
           <strong>{totalReports}</strong>
-          <span className="stat-detail">Vulnerabilidades registradas</span>
+          <span className="stat-detail">
+            Vulnerabilidades registradas
+          </span>
         </div>
 
         <div className="stat-card">
-          <span className="stat-label">Pendientes de triage</span>
+          <span className="stat-label">
+            Pendientes de triage
+          </span>
           <strong>{submittedReports}</strong>
-          <span className="stat-detail">Esperando validación</span>
+          <span className="stat-detail">
+            Esperando validación
+          </span>
         </div>
 
         <div className="stat-card">
           <span className="stat-label">Verificados</span>
           <strong>{verifiedReports}</strong>
-          <span className="stat-detail">Proceso completado</span>
+          <span className="stat-detail">
+            Proceso completado
+          </span>
         </div>
 
         <div className="stat-card">
           <span className="stat-label">Recompensas</span>
-          <strong>{totalRewards} XLM</strong>
-          <span className="stat-detail">Valor simulado</span>
+          <strong>{totalRewards} TEST-XLM</strong>
+          <span className="stat-detail">
+            Valor simulado
+          </span>
         </div>
 
       </div>
@@ -62,7 +71,9 @@ function Dashboard({ reports }) {
 
         <div className="panel-header">
           <div>
-            <p className="section-label">Última actividad</p>
+            <p className="section-label">
+              Última actividad
+            </p>
             <h3>Reportes recientes</h3>
           </div>
 
@@ -88,16 +99,23 @@ function Dashboard({ reports }) {
             <tbody>
               {reports.map((report) => (
                 <tr key={report.id}>
-                  <td className="report-id">{report.id}</td>
+                  <td className="report-id">
+                    {report.id}
+                  </td>
 
                   <td>
-                    <strong>{report.title}</strong>
+                    <strong>
+                      {report.title}
+                    </strong>
+
                     <span className="report-date">
                       {report.submittedAt}
                     </span>
                   </td>
 
-                  <td>{report.company}</td>
+                  <td>
+                    {report.company}
+                  </td>
 
                   <td>
                     <span
@@ -117,7 +135,7 @@ function Dashboard({ reports }) {
 
                   <td>
                     {report.reward
-                      ? `${report.reward} XLM`
+                      ? report.reward
                       : 'Pendiente'}
                   </td>
                 </tr>

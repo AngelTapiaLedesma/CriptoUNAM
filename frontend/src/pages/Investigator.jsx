@@ -1,15 +1,14 @@
 import { useState } from 'react'
 import ReportTimeline from '../components/ReportTimeline'
-import { createReport } from '../services/api' 
-import { usePollar } from '@pollar/react' // <-- AÑADIDO
+import { createReport } from '../services/api'
+import { usePollar } from '@pollar/react'
+
 function Investigator({ reports, setReports }) {
-  // Extraemos la instancia completa para no perder el contexto
-  const pollar = usePollar()  
-  // Extraemos el estado de autenticación y la wallet real
+  const pollar = usePollar()
+
   const isAuthenticated = pollar?.isAuthenticated
   const currentWallet = pollar?.wallet
 
-  // ...
   const [showForm, setShowForm] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
 
@@ -20,14 +19,16 @@ function Investigator({ reports, setReports }) {
     description: '',
   })
 
-// Extraemos la dirección de forma segura para usarla como filtro global
-  const currentAddress = currentWallet?.id || currentWallet?.publicKey || currentWallet?.address;
-  const researcher = isAuthenticated ? currentAddress : 'No conectado';
+  const currentAddress =
+    currentWallet?.id ||
+    currentWallet?.publicKey ||
+    currentWallet?.address
 
-  // Filtramos asegurándonos de que la wallet esté cargada
   const myReports = reports.filter(
-    (report) => currentAddress && report.researcher === currentAddress
-  );
+    (report) =>
+      currentAddress &&
+      report.researcher === currentAddress
+  )
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -42,38 +43,47 @@ function Investigator({ reports, setReports }) {
     event.preventDefault()
 
     try {
-      // 1. Extraemos la dirección de Pollar de forma segura (buscando las propiedades más comunes)
-      const walletAddress = currentWallet?.id || currentWallet?.publicKey || currentWallet?.address || 'Direccion_No_Encontrada'
+      const walletAddress =
+        currentWallet?.id ||
+        currentWallet?.publicKey ||
+        currentWallet?.address ||
+        'Direccion_No_Encontrada'
 
-      // 2. Blindamos el payload asegurando que ningún campo sea undefined
       const payload = {
-        bountyId: 1, 
-        company: formData.company || 'Sin empresa', // Obligatorio para FastAPI
-        researcher: isAuthenticated ? walletAddress : 'No conectado',
+        bountyId: 1,
+        company: formData.company || 'Sin empresa',
+        researcher: isAuthenticated
+          ? walletAddress
+          : 'No conectado',
         title: formData.title,
         description: formData.description,
-        severity: formData.severity.toUpperCase(), 
-        evidence: "Evidencia enviada desde UI"
+        severity: formData.severity.toUpperCase(),
+        evidence: 'Evidencia enviada desde UI',
       }
 
-      console.log("Enviando a FastAPI:", payload) // Revisa la consola al enviar
+      console.log('Enviando a FastAPI:', payload)
 
-      // 3. Enviamos a la API
       const newReport = await createReport(payload)
 
-      // 4. Actualizamos la vista y limpiamos
       setReports([newReport, ...reports])
+
       setFormData({
         title: '',
         company: '',
         severity: 'Medium',
         description: '',
       })
-      setShowForm(false)
 
+      setShowForm(false)
     } catch (error) {
-      console.error("Error al guardar en backend/blockchain:", error)
-      alert("Error al enviar el reporte. Revisa la consola.")
+      console.error(
+        'Error al guardar en backend/blockchain:',
+        error
+      )
+
+      alert(
+        'Error al enviar el reporte. Revisa la consola.'
+      )
     }
   }
 
@@ -82,35 +92,51 @@ function Investigator({ reports, setReports }) {
 
       <div className="page-heading">
         <div>
-          <p className="section-label">Investigador</p>
+          <p className="section-label">
+            Investigador
+          </p>
+
           <h2>Mis reportes</h2>
+
           <p className="section-description">
             Consulta tus vulnerabilidades reportadas y su estado actual.
           </p>
         </div>
 
-        {/* Lógica dinámica del botón */}
         {!isAuthenticated ? (
-          <button 
-            className="primary-button" 
+          <button
+            className="primary-button"
             onClick={() => pollar.openLoginModal()}
           >
             Conectar Wallet
           </button>
         ) : (
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <button 
-              className="secondary-button" 
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              className="secondary-button"
               onClick={() => pollar.logout()}
-              style={{ backgroundColor: 'transparent', border: '1px solid #4a5568', color: '#a0aec0' }} // Estilos sutiles para el logout
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #4a5568',
+                color: '#a0aec0',
+              }}
             >
               Cerrar sesión
             </button>
+
             <button
               className="primary-button"
               onClick={() => setShowForm(!showForm)}
             >
-              {showForm ? 'Cancelar' : '+ Nuevo reporte'}
+              {showForm
+                ? 'Cancelar'
+                : '+ Nuevo reporte'}
             </button>
           </div>
         )}
@@ -166,15 +192,28 @@ function Investigator({ reports, setReports }) {
                 value={formData.severity}
                 onChange={handleChange}
               >
-                <option value="Critical">Critical</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
+                <option value="Critical">
+                  Critical
+                </option>
+
+                <option value="High">
+                  High
+                </option>
+
+                <option value="Medium">
+                  Medium
+                </option>
+
+                <option value="Low">
+                  Low
+                </option>
               </select>
             </div>
 
             <div className="form-group full-width">
-              <label>Descripción y evidencia</label>
+              <label>
+                Descripción y evidencia
+              </label>
 
               <textarea
                 name="description"
@@ -224,8 +263,13 @@ function Investigator({ reports, setReports }) {
                 <h3>{report.title}</h3>
 
                 <div className="report-meta">
-                  <span>{report.company}</span>
-                  <span>{report.submittedAt}</span>
+                  <span>
+                    {report.company}
+                  </span>
+
+                  <span>
+                    {report.submittedAt}
+                  </span>
                 </div>
               </div>
 

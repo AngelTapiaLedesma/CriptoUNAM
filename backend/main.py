@@ -26,7 +26,7 @@ def seed_bounty():
             # Creamos la empresa inicial (bounty_id será 1 por defecto al ser el primero)
             new_bounty = models.Bounty(
                 company="Fintech Corp", 
-                reward="500 TEST-XLM XLM"
+                reward="500 TEST-XLM"
             )
             db.add(new_bounty)
             db.commit()

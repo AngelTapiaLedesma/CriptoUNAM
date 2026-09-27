@@ -22,8 +22,13 @@ function ReportTimeline({ report }) {
 
       <div className="detail-header">
         <div>
-          <p className="section-label">Seguimiento</p>
-          <h3>Ciclo de vida del reporte</h3>
+          <p className="section-label">
+            Seguimiento
+          </p>
+
+          <h3>
+            Ciclo de vida del reporte
+          </h3>
         </div>
 
         <span
@@ -50,7 +55,9 @@ function ReportTimeline({ report }) {
               </div>
 
               <div>
-                <strong>{statusLabels[status]}</strong>
+                <strong>
+                  {statusLabels[status]}
+                </strong>
 
                 <span>
                   {completed
@@ -73,7 +80,7 @@ function ReportTimeline({ report }) {
 
           <strong>
             {report.reward
-              ? `${report.reward} XLM`
+              ? report.reward
               : 'Pendiente'}
           </strong>
         </div>
