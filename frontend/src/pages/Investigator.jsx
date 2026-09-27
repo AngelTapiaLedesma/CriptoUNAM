@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import ReportTimeline from '../components/ReportTimeline'
-import { createReport } from '../services/api'
+import { createReport } from '../services/api' 
+import { usePollar } from '@pollar/react' // <-- AÑADIDO
 function Investigator({ reports, setReports }) {
+  // Extraemos la instancia completa para no perder el contexto
+  const pollar = usePollar()  
+  // Extraemos el estado de autenticación y la wallet real
+  const isAuthenticated = pollar?.isAuthenticated
+  const currentWallet = pollar?.wallet
+
+  // ...
   const [showForm, setShowForm] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
 
@@ -12,11 +20,14 @@ function Investigator({ reports, setReports }) {
     description: '',
   })
 
-  const researcher = '0xSamResearcher'
+// Extraemos la dirección de forma segura para usarla como filtro global
+  const currentAddress = currentWallet?.id || currentWallet?.publicKey || currentWallet?.address;
+  const researcher = isAuthenticated ? currentAddress : 'No conectado';
 
+  // Filtramos asegurándonos de que la wallet esté cargada
   const myReports = reports.filter(
-    (report) => report.researcher === researcher
-  )
+    (report) => currentAddress && report.researcher === currentAddress
+  );
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -27,25 +38,31 @@ function Investigator({ reports, setReports }) {
     })
   }
 
-  const handleSubmit = async (event) => { // <-- Ahora es async
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     try {
-      // 1. Mandamos el JSON al backend real
-      const newReport = await createReport({
-        bountyId: 1, // Hardcodeado a 1 para la demo del MVP
-        researcher: researcher,
+      // 1. Extraemos la dirección de Pollar de forma segura (buscando las propiedades más comunes)
+      const walletAddress = currentWallet?.id || currentWallet?.publicKey || currentWallet?.address || 'Direccion_No_Encontrada'
+
+      // 2. Blindamos el payload asegurando que ningún campo sea undefined
+      const payload = {
+        bountyId: 1, 
+        company: formData.company || 'Sin empresa', // Obligatorio para FastAPI
+        researcher: isAuthenticated ? walletAddress : 'No conectado',
         title: formData.title,
         description: formData.description,
-        severity: formData.severity.toUpperCase(), // FastAPI espera MAYÚSCULAS
+        severity: formData.severity.toUpperCase(), 
         evidence: "Evidencia enviada desde UI"
-      })
+      }
 
-      // 2. Actualizamos la vista con el reporte real que nos devolvió FastAPI
-      // (¡Este reporte ya traerá el transactionHash de Stellar!)
+      console.log("Enviando a FastAPI:", payload) // Revisa la consola al enviar
+
+      // 3. Enviamos a la API
+      const newReport = await createReport(payload)
+
+      // 4. Actualizamos la vista y limpiamos
       setReports([newReport, ...reports])
-
-      // 3. Limpiamos el formulario
       setFormData({
         title: '',
         company: '',
@@ -55,7 +72,7 @@ function Investigator({ reports, setReports }) {
       setShowForm(false)
 
     } catch (error) {
-      console.error("Error al guardar en blockchain:", error)
+      console.error("Error al guardar en backend/blockchain:", error)
       alert("Error al enviar el reporte. Revisa la consola.")
     }
   }
@@ -66,20 +83,37 @@ function Investigator({ reports, setReports }) {
       <div className="page-heading">
         <div>
           <p className="section-label">Investigador</p>
-
           <h2>Mis reportes</h2>
-
           <p className="section-description">
             Consulta tus vulnerabilidades reportadas y su estado actual.
           </p>
         </div>
 
-        <button
-          className="primary-button"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? 'Cancelar' : '+ Nuevo reporte'}
-        </button>
+        {/* Lógica dinámica del botón */}
+        {!isAuthenticated ? (
+          <button 
+            className="primary-button" 
+            onClick={() => pollar.openLoginModal()}
+          >
+            Conectar Wallet
+          </button>
+        ) : (
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <button 
+              className="secondary-button" 
+              onClick={() => pollar.logout()}
+              style={{ backgroundColor: 'transparent', border: '1px solid #4a5568', color: '#a0aec0' }} // Estilos sutiles para el logout
+            >
+              Cerrar sesión
+            </button>
+            <button
+              className="primary-button"
+              onClick={() => setShowForm(!showForm)}
+            >
+              {showForm ? 'Cancelar' : '+ Nuevo reporte'}
+            </button>
+          </div>
+        )}
       </div>
 
       {showForm && (

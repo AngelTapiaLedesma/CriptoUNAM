@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@pollar/core": "^0.11.3",
+    "@pollar/react": "^0.11.3"
+  }
+}

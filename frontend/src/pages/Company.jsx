@@ -1,5 +1,5 @@
 function Company({ reports, setReports }) {
-  const company = 'NovaPay'
+  const company = 'Fintech Corp'
 
   const companyReports = reports.filter(
     (report) => report.company === company
