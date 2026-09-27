@@ -1,3 +1,4 @@
+import { updateReportStatus } from '../services/api'
 function Company({ reports, setReports }) {
   const company = 'Fintech Corp'
 
@@ -27,17 +28,20 @@ function Company({ reports, setReports }) {
     setReports(updatedReports)
   }
 
-  const markRemediated = (reportId) => {
-    const updatedReports = reports.map((report) =>
-      report.id === reportId
-        ? {
-            ...report,
-            status: 'REMEDIATED',
-          }
-        : report
-    )
+  const markRemediated = async (reportId) => {
+    try {
+      // 1. Le avisamos a FastAPI y a la Blockchain
+      const updatedReport = await updateReportStatus(reportId, 'REMEDIATED')
 
-    setReports(updatedReports)
+      // 2. Actualizamos la memoria de React con la respuesta real del servidor
+      const updatedReports = reports.map((report) =>
+        report.id === reportId ? updatedReport : report
+      )
+      
+      setReports(updatedReports)
+    } catch (error) {
+      console.error("Error al marcar como remediada:", error)
+    }
   }
 
   return (

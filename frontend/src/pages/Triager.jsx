@@ -10,21 +10,18 @@ function Triager({ reports, setReports }) {
 
   const validateReport = async (reportId) => {
     try {
-      // 1. Le avisa al backend que el reporte es válido (y dispara el PAGO)
-      const updatedReport = await updateReportStatus(reportId, 'VALIDATED')
+      // Pasamos a VALIDATED
+      await updateReportStatus(reportId, 'VALIDATED')
       
-      // (Opcional para la demo) Forzamos el estado a PAID directamente 
-      // si tu backend ya hizo el pago en Stellar durante el VALIDATED.
-      // Si tu backend requiere un segundo paso para PAID, ajusta aquí.
+      // Forzamos el salto a PAID para que la máquina de estados pueda continuar
       const finalReport = await updateReportStatus(reportId, 'PAID')
 
-      // 2. Actualizamos la lista local
       const updatedReports = reports.map((report) =>
         report.id === reportId ? finalReport : report
       )
       setReports(updatedReports)
     } catch (error) {
-      console.error("Error en validación/pago:", error)
+      console.error("Error en validación:", error)
     }
   }
 

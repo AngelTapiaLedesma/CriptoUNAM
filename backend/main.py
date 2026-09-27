@@ -13,6 +13,29 @@ from states import transition_is_allowed
 
 # Como medida de seguridad, aseguramos que las tablas existan al arrancar
 models.Base.metadata.create_all(bind=engine)
+from database import SessionLocal # Asegúrate de importar tu sesión local
+
+# --- INICIO SEEDER ---
+def seed_bounty():
+    db = SessionLocal()
+    try:
+        # Buscamos si existe el bounty 1
+        bounty = db.query(models.Bounty).filter(models.Bounty.id == 1).first()
+        if not bounty:
+            print("Base de datos vacía detectada. Creando empresa de prueba...")
+            # Creamos la empresa inicial (bounty_id será 1 por defecto al ser el primero)
+            new_bounty = models.Bounty(
+                company="Fintech Corp", 
+                reward="500 TEST-XLM XLM"
+            )
+            db.add(new_bounty)
+            db.commit()
+    finally:
+        db.close()
+
+# Ejecutamos la función de sembrado al arrancar el servidor
+seed_bounty()
+# --- FIN SEEDER ---
 
 app = FastAPI(title="PatchProof API", description="API para el MVP de PatchProof (GOYA HACK 2026)")
 
