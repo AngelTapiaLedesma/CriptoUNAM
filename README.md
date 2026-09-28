@@ -4,45 +4,54 @@
 
 PatchProof es una plataforma para gestionar programas de **bug bounty** de forma más transparente entre empresas e investigadores de seguridad.
 
-La idea parte de un problema de confianza: un investigador necesita tener evidencia de que su reporte fue recibido y que la recompensa prometida existe, mientras que una empresa necesita gestionar estos reportes sin exponer información sensible sobre sus sistemas.
+La propuesta parte de un problema de confianza: un investigador necesita evidencia de que su reporte fue recibido y seguimiento sobre la recompensa prometida, mientras que una empresa necesita gestionar vulnerabilidades sin publicar información sensible sobre sus sistemas.
 
-PatchProof utiliza **Stellar** como una capa de verificación para registrar eventos importantes del proceso, como el envío de un reporte, su validación y el pago de una recompensa.
-
-La vulnerabilidad completa nunca se publica en blockchain. En su lugar, se genera una huella criptográfica del reporte que permite comprobar su existencia sin revelar su contenido.
+PatchProof utiliza **Stellar Testnet** como capa de trazabilidad para registrar evidencia verificable del proceso y realizar pagos de prueba. La vulnerabilidad completa permanece fuera de blockchain; en su lugar, se genera una huella criptográfica SHA-256 que permite comprobar la existencia del reporte sin exponer su contenido.
 
 ---
 
 ## 💡 ¿Cómo funciona?
 
 ```text
-Empresa crea un bounty
-        ↓
 Investigador envía un reporte
         ↓
-PatchProof genera evidencia verificable
+Se genera una huella SHA-256
         ↓
-El reporte es validado
+Se registra evidencia en Stellar Testnet
         ↓
-Se libera la recompensa
+SUBMITTED
         ↓
-La vulnerabilidad puede marcarse como corregida
+Triager valida el reporte
+        ↓
+VALIDATED
+        ↓
+Se procesa la recompensa
+        ↓
+PAID
+        ↓
+La empresa marca la vulnerabilidad como corregida
+        ↓
+REMEDIATED
+        ↓
+El triager confirma la corrección
+        ↓
+VERIFIED
 ```
 
-El objetivo es crear un historial verificable del ciclo de vida de una vulnerabilidad sin depender únicamente de la confianza entre ambas partes.
+Los estados y la información del reporte se almacenan en la base de datos, mientras que Stellar se utiliza para registrar evidencia y realizar las operaciones blockchain del MVP.
 
 ---
 
 ## ⚙️ Tecnologías
 
-El proyecto está siendo desarrollado con:
-
-- **React + Vite** para la interfaz.
-- **Python + FastAPI** para el backend.
-- **Stellar Testnet** para las operaciones blockchain.
-- **Stellar SDK** para la integración con la red.
-- **Soroban** para smart contracts.
-- **SQLite** para el almacenamiento del MVP.
-- **GitHub** para colaboración y control de versiones.
+- **React + Vite** — interfaz web.
+- **Pollar** — conexión y autenticación de wallet.
+- **Python + FastAPI** — backend y API REST.
+- **SQLite + SQLAlchemy** — persistencia de datos.
+- **SHA-256** — generación de evidencia criptográfica.
+- **Stellar Testnet** — registro de evidencia y pagos de prueba.
+- **Stellar SDK** — integración del backend con Stellar.
+- **GitHub** — colaboración y control de versiones.
 
 ---
 
@@ -50,24 +59,109 @@ El proyecto está siendo desarrollado con:
 
 ```mermaid
 flowchart LR
-    A[Frontend<br/>React] --> B[Backend<br/>FastAPI]
-    B --> C[(Database)]
-    B --> D[Stellar Testnet]
-    D --> E[Smart Contract]
+    A[Frontend<br/>React + Pollar] --> B[Backend<br/>FastAPI]
+    B --> C[(SQLite)]
+    B --> D[SHA-256]
+    B --> E[Stellar Testnet]
 ```
 
 ---
 
 ## 🚀 MVP
 
-Para el hackathon buscamos demostrar un flujo funcional donde:
+El MVP permite recorrer el ciclo completo de un reporte:
 
-1. una empresa publica un bounty;
-2. un investigador envía un reporte;
-3. PatchProof genera y registra evidencia del reporte;
-4. el reporte es validado;
-5. la recompensa se libera mediante Stellar Testnet;
-6. el estado del proceso puede consultarse desde la plataforma.
+1. conectar una wallet mediante Pollar;
+2. registrar una vulnerabilidad;
+3. generar su evidencia criptográfica;
+4. registrar información verificable en Stellar Testnet;
+5. revisar y validar el reporte;
+6. procesar una recompensa de prueba;
+7. marcar la vulnerabilidad como remediada;
+8. confirmar la corrección y cerrar el proceso.
+
+El flujo completo implementado es:
+
+```text
+SUBMITTED → VALIDATED → PAID → REMEDIATED → VERIFIED
+```
+
+El flujo fue probado desde la interfaz y los cambios de estado se mantienen en el backend después de recargar la aplicación.
+
+---
+
+## ▶️ Ejecución
+
+### Backend
+
+Desde la carpeta `backend/`:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install stellar-sdk
+.\.venv\Scripts\python.exe -m uvicorn main:app --reload
+```
+
+El backend estará disponible en:
+
+```text
+http://127.0.0.1:8000
+```
+
+La documentación interactiva de la API puede consultarse en:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+### Frontend
+
+Desde la carpeta `frontend/`:
+
+```powershell
+npm install
+npm run dev
+```
+
+En PowerShell también puede utilizarse:
+
+```powershell
+npm.cmd install
+npm.cmd run dev
+```
+
+La aplicación estará disponible normalmente en:
+
+```text
+http://localhost:5173
+```
+
+Para utilizar Pollar se requiere configurar en el frontend la variable:
+
+```text
+VITE_POLLAR_PUBLISHABLE_KEY
+```
+
+mediante un archivo `.env`.
+
+---
+
+## 🔐 Evidencia y trazabilidad
+
+Cuando un investigador envía un reporte, PatchProof genera una huella SHA-256 a partir de su contenido.
+
+La información sensible de la vulnerabilidad permanece fuera de blockchain. La huella criptográfica puede utilizarse como evidencia verificable sin publicar los detalles completos del hallazgo.
+
+Las operaciones realizadas sobre Stellar Testnet generan hashes de transacción que permiten identificar las operaciones blockchain asociadas al flujo del MVP.
+
+---
+
+## 🔮 Siguientes pasos
+
+Como evolución del MVP se plantea implementar un mecanismo de **escrow mediante smart contracts**, de forma que una recompensa pueda permanecer bloqueada y liberarse únicamente cuando se cumplan las condiciones definidas por el programa de bug bounty.
+
+También se contempla ampliar la plataforma para administrar múltiples empresas, investigadores y programas de recompensas, así como mejorar la trazabilidad de las distintas operaciones registradas en blockchain.
 
 ---
 
@@ -77,6 +171,4 @@ Proyecto desarrollado para **GOYA HACK · Hackathon UNAM 2026**.
 
 **Track:** Innovación  
 **Equipo:** 4 integrantes  
-**Estado:** 🚧 En desarrollo
-
-Las instrucciones de instalación, ejecución y enlaces de la demo se agregarán conforme avance el proyecto.
+**Estado:** MVP funcional
