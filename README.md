@@ -97,9 +97,43 @@ El flujo fue probado desde la interfaz y los cambios de estado se mantienen en e
 Desde la carpeta `backend/`:
 
 ```powershell
+cd backend
+```
+
+#### Variables de entorno
+
+Copia el archivo de ejemplo:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Después abre `backend/.env` y configura las credenciales de Stellar Testnet:
+
+```text
+STELLAR_SECRET_EMPRESA=TU_SECRET_KEY_DE_STELLAR_TESTNET
+STELLAR_PUBLIC_INVESTIGADOR=TU_PUBLIC_KEY_DEL_INVESTIGADOR
+```
+
+El archivo `.env` contiene información sensible y no debe subirse al repositorio.
+
+#### Instalación y ejecución
+
+Crea el entorno virtual:
+
+```powershell
 py -m venv .venv
+```
+
+Instala las dependencias:
+
+```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m pip install stellar-sdk
+```
+
+Levanta el backend:
+
+```powershell
 .\.venv\Scripts\python.exe -m uvicorn main:app --reload
 ```
 
@@ -115,19 +149,43 @@ La documentación interactiva de la API puede consultarse en:
 http://127.0.0.1:8000/docs
 ```
 
+---
+
 ### Frontend
 
 Desde la carpeta `frontend/`:
 
 ```powershell
+cd frontend
+```
+
+Instala las dependencias:
+
+```powershell
 npm install
-npm run dev
 ```
 
 En PowerShell también puede utilizarse:
 
 ```powershell
 npm.cmd install
+```
+
+Configura la variable de Pollar en un archivo `.env`:
+
+```text
+VITE_POLLAR_PUBLISHABLE_KEY=TU_LLAVE_PUBLICA_DE_POLLAR
+```
+
+Después levanta la aplicación:
+
+```powershell
+npm run dev
+```
+
+En PowerShell también puede utilizarse:
+
+```powershell
 npm.cmd run dev
 ```
 
@@ -136,14 +194,6 @@ La aplicación estará disponible normalmente en:
 ```text
 http://localhost:5173
 ```
-
-Para utilizar Pollar se requiere configurar en el frontend la variable:
-
-```text
-VITE_POLLAR_PUBLISHABLE_KEY
-```
-
-mediante un archivo `.env`.
 
 ---
 
