@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import ReportTimeline from '../components/ReportTimeline'
 import { createReport } from '../services/api'
+import { usePollar } from '@pollar/react'
+
 function Investigator({ reports, setReports }) {
+  const pollar = usePollar()
+
+  const isAuthenticated = pollar?.isAuthenticated
+  const currentWallet = pollar?.wallet
+
   const [showForm, setShowForm] = useState(false)
   const [selectedReportId, setSelectedReportId] = useState(null)
 
@@ -12,10 +19,15 @@ function Investigator({ reports, setReports }) {
     description: '',
   })
 
-  const researcher = '0xSamResearcher'
+  const currentAddress =
+    currentWallet?.id ||
+    currentWallet?.publicKey ||
+    currentWallet?.address
 
   const myReports = reports.filter(
-    (report) => report.researcher === researcher
+    (report) =>
+      currentAddress &&
+      report.researcher === currentAddress
   )
 
   const handleChange = (event) => {
@@ -27,36 +39,51 @@ function Investigator({ reports, setReports }) {
     })
   }
 
-  const handleSubmit = async (event) => { // <-- Ahora es async
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
     try {
-      // 1. Mandamos el JSON al backend real
-      const newReport = await createReport({
-        bountyId: 1, // Hardcodeado a 1 para la demo del MVP
-        researcher: researcher,
+      const walletAddress =
+        currentWallet?.id ||
+        currentWallet?.publicKey ||
+        currentWallet?.address ||
+        'Direccion_No_Encontrada'
+
+      const payload = {
+        bountyId: 1,
+        company: formData.company || 'Sin empresa',
+        researcher: isAuthenticated
+          ? walletAddress
+          : 'No conectado',
         title: formData.title,
         description: formData.description,
-        severity: formData.severity.toUpperCase(), // FastAPI espera MAYÚSCULAS
-        evidence: "Evidencia enviada desde UI"
-      })
+        severity: formData.severity.toUpperCase(),
+        evidence: 'Evidencia enviada desde UI',
+      }
 
-      // 2. Actualizamos la vista con el reporte real que nos devolvió FastAPI
-      // (¡Este reporte ya traerá el transactionHash de Stellar!)
+      console.log('Enviando a FastAPI:', payload)
+
+      const newReport = await createReport(payload)
+
       setReports([newReport, ...reports])
 
-      // 3. Limpiamos el formulario
       setFormData({
         title: '',
         company: '',
         severity: 'Medium',
         description: '',
       })
-      setShowForm(false)
 
+      setShowForm(false)
     } catch (error) {
-      console.error("Error al guardar en blockchain:", error)
-      alert("Error al enviar el reporte. Revisa la consola.")
+      console.error(
+        'Error al guardar en backend/blockchain:',
+        error
+      )
+
+      alert(
+        'Error al enviar el reporte. Revisa la consola.'
+      )
     }
   }
 
@@ -65,7 +92,9 @@ function Investigator({ reports, setReports }) {
 
       <div className="page-heading">
         <div>
-          <p className="section-label">Investigador</p>
+          <p className="section-label">
+            Investigador
+          </p>
 
           <h2>Mis reportes</h2>
 
@@ -74,12 +103,43 @@ function Investigator({ reports, setReports }) {
           </p>
         </div>
 
-        <button
-          className="primary-button"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? 'Cancelar' : '+ Nuevo reporte'}
-        </button>
+        {!isAuthenticated ? (
+          <button
+            className="primary-button"
+            onClick={() => pollar.openLoginModal()}
+          >
+            Conectar Wallet
+          </button>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              className="secondary-button"
+              onClick={() => pollar.logout()}
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #4a5568',
+                color: '#a0aec0',
+              }}
+            >
+              Cerrar sesión
+            </button>
+
+            <button
+              className="primary-button"
+              onClick={() => setShowForm(!showForm)}
+            >
+              {showForm
+                ? 'Cancelar'
+                : '+ Nuevo reporte'}
+            </button>
+          </div>
+        )}
       </div>
 
       {showForm && (
@@ -132,15 +192,28 @@ function Investigator({ reports, setReports }) {
                 value={formData.severity}
                 onChange={handleChange}
               >
-                <option value="Critical">Critical</option>
-                <option value="High">High</option>
-                <option value="Medium">Medium</option>
-                <option value="Low">Low</option>
+                <option value="Critical">
+                  Critical
+                </option>
+
+                <option value="High">
+                  High
+                </option>
+
+                <option value="Medium">
+                  Medium
+                </option>
+
+                <option value="Low">
+                  Low
+                </option>
               </select>
             </div>
 
             <div className="form-group full-width">
-              <label>Descripción y evidencia</label>
+              <label>
+                Descripción y evidencia
+              </label>
 
               <textarea
                 name="description"
@@ -190,8 +263,13 @@ function Investigator({ reports, setReports }) {
                 <h3>{report.title}</h3>
 
                 <div className="report-meta">
-                  <span>{report.company}</span>
-                  <span>{report.submittedAt}</span>
+                  <span>
+                    {report.company}
+                  </span>
+
+                  <span>
+                    {report.submittedAt}
+                  </span>
                 </div>
               </div>
 

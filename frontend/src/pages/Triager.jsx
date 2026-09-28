@@ -1,4 +1,5 @@
-import { updateReportStatus } from '../services/api' 
+import { updateReportStatus } from '../services/api'
+
 function Triager({ reports, setReports }) {
   const pendingReports = reports.filter(
     (report) => report.status === 'SUBMITTED'
@@ -10,35 +11,53 @@ function Triager({ reports, setReports }) {
 
   const validateReport = async (reportId) => {
     try {
-      // 1. Le avisa al backend que el reporte es válido (y dispara el PAGO)
-      const updatedReport = await updateReportStatus(reportId, 'VALIDATED')
-      
-      // (Opcional para la demo) Forzamos el estado a PAID directamente 
-      // si tu backend ya hizo el pago en Stellar durante el VALIDATED.
-      // Si tu backend requiere un segundo paso para PAID, ajusta aquí.
-      const finalReport = await updateReportStatus(reportId, 'PAID')
-
-      // 2. Actualizamos la lista local
-      const updatedReports = reports.map((report) =>
-        report.id === reportId ? finalReport : report
+      await updateReportStatus(
+        reportId,
+        'VALIDATED'
       )
+
+      const finalReport = await updateReportStatus(
+        reportId,
+        'PAID'
+      )
+
+      const updatedReports = reports.map(
+        (report) =>
+          report.id === reportId
+            ? finalReport
+            : report
+      )
+
       setReports(updatedReports)
     } catch (error) {
-      console.error("Error en validación/pago:", error)
+      console.error(
+        'Error en validación/pago:',
+        error
+      )
     }
   }
 
   const verifyReport = async (reportId) => {
     try {
-      // Cierra el ciclo confirmando la remediación
-      const updatedReport = await updateReportStatus(reportId, 'VERIFIED')
+      const updatedReport =
+        await updateReportStatus(
+          reportId,
+          'VERIFIED'
+        )
 
-      const updatedReports = reports.map((report) =>
-        report.id === reportId ? updatedReport : report
+      const updatedReports = reports.map(
+        (report) =>
+          report.id === reportId
+            ? updatedReport
+            : report
       )
+
       setReports(updatedReports)
     } catch (error) {
-      console.error("Error en verificación final:", error)
+      console.error(
+        'Error en verificación final:',
+        error
+      )
     }
   }
 
@@ -47,8 +66,13 @@ function Triager({ reports, setReports }) {
 
       <div className="page-heading">
         <div>
-          <p className="section-label">Triager</p>
-          <h2>Revisión de vulnerabilidades</h2>
+          <p className="section-label">
+            Triager
+          </p>
+
+          <h2>
+            Revisión de vulnerabilidades
+          </h2>
 
           <p className="section-description">
             Valida nuevos reportes y comprueba las vulnerabilidades
@@ -61,8 +85,13 @@ function Triager({ reports, setReports }) {
 
         <div className="triage-section-header">
           <div>
-            <p className="section-label">Triage inicial</p>
-            <h3>Reportes pendientes</h3>
+            <p className="section-label">
+              Triage inicial
+            </p>
+
+            <h3>
+              Reportes pendientes
+            </h3>
           </div>
 
           <div className="pending-counter">
@@ -73,16 +102,26 @@ function Triager({ reports, setReports }) {
         {pendingReports.length === 0 ? (
           <div className="empty-state">
             <span>✓</span>
-            <h3>No hay reportes pendientes</h3>
-            <p>Todos los reportes enviados ya fueron revisados.</p>
+
+            <h3>
+              No hay reportes pendientes
+            </h3>
+
+            <p>
+              Todos los reportes enviados ya fueron revisados.
+            </p>
           </div>
         ) : (
           <div className="triage-list">
 
             {pendingReports.map((report) => (
-              <div className="triage-card" key={report.id}>
+              <div
+                className="triage-card"
+                key={report.id}
+              >
 
                 <div className="triage-card-header">
+
                   <div>
                     <div className="report-card-top">
 
@@ -104,41 +143,63 @@ function Triager({ reports, setReports }) {
                   <span className="status-badge submitted">
                     SUBMITTED
                   </span>
+
                 </div>
 
                 <div className="triage-information">
 
                   <div>
-                    <span className="info-label">Empresa</span>
-                    <strong>{report.company}</strong>
+                    <span className="info-label">
+                      Empresa
+                    </span>
+
+                    <strong>
+                      {report.company}
+                    </strong>
                   </div>
 
                   <div>
-                    <span className="info-label">Investigador</span>
-                    <strong>{report.researcher}</strong>
+                    <span className="info-label">
+                      Investigador
+                    </span>
+
+                    <strong>
+                      {report.researcher}
+                    </strong>
                   </div>
 
                   <div>
-                    <span className="info-label">Fecha</span>
-                    <strong>{report.submittedAt}</strong>
+                    <span className="info-label">
+                      Fecha
+                    </span>
+
+                    <strong>
+                      {report.submittedAt}
+                    </strong>
                   </div>
 
                 </div>
 
                 {report.description && (
                   <div className="report-description">
+
                     <span className="info-label">
                       Descripción y evidencia
                     </span>
 
-                    <p>{report.description}</p>
+                    <p>
+                      {report.description}
+                    </p>
+
                   </div>
                 )}
 
                 <div className="triage-actions">
                   <button
                     className="primary-button"
-                    onClick={() => validateReport(report.id)}
+                    onClick={() =>
+                      validateReport(report.id)
+                    }
                   >
                     ✓ Validar reporte
                   </button>
@@ -156,8 +217,13 @@ function Triager({ reports, setReports }) {
 
         <div className="triage-section-header">
           <div>
-            <p className="section-label">Verificación final</p>
-            <h3>Remediaciones por comprobar</h3>
+            <p className="section-label">
+              Verificación final
+            </p>
+
+            <h3>
+              Remediaciones por comprobar
+            </h3>
           </div>
 
           <div className="pending-counter">
@@ -168,7 +234,11 @@ function Triager({ reports, setReports }) {
         {remediationReports.length === 0 ? (
           <div className="empty-state">
             <span>✓</span>
-            <h3>No hay remediaciones pendientes</h3>
+
+            <h3>
+              No hay remediaciones pendientes
+            </h3>
+
             <p>
               No existen vulnerabilidades esperando verificación final.
             </p>
@@ -177,7 +247,10 @@ function Triager({ reports, setReports }) {
           <div className="triage-list">
 
             {remediationReports.map((report) => (
-              <div className="triage-card verification-card" key={report.id}>
+              <div
+                className="triage-card verification-card"
+                key={report.id}
+              >
 
                 <div className="triage-card-header">
 
@@ -196,7 +269,9 @@ function Triager({ reports, setReports }) {
 
                     </div>
 
-                    <h3>{report.title}</h3>
+                    <h3>
+                      {report.title}
+                    </h3>
                   </div>
 
                   <span className="status-badge remediated">
@@ -208,20 +283,33 @@ function Triager({ reports, setReports }) {
                 <div className="triage-information">
 
                   <div>
-                    <span className="info-label">Empresa</span>
-                    <strong>{report.company}</strong>
+                    <span className="info-label">
+                      Empresa
+                    </span>
+
+                    <strong>
+                      {report.company}
+                    </strong>
                   </div>
 
                   <div>
-                    <span className="info-label">Investigador</span>
-                    <strong>{report.researcher}</strong>
+                    <span className="info-label">
+                      Investigador
+                    </span>
+
+                    <strong>
+                      {report.researcher}
+                    </strong>
                   </div>
 
                   <div>
-                    <span className="info-label">Recompensa</span>
+                    <span className="info-label">
+                      Recompensa
+                    </span>
+
                     <strong>
                       {report.reward
-                        ? `${report.reward} XLM`
+                        ? report.reward
                         : 'Sin recompensa'}
                     </strong>
                   </div>
@@ -236,7 +324,9 @@ function Triager({ reports, setReports }) {
                 <div className="triage-actions">
                   <button
                     className="primary-button"
-                    onClick={() => verifyReport(report.id)}
+                    onClick={() =>
+                      verifyReport(report.id)
+                    }
                   >
                     ✓ Confirmar corrección
                   </button>
