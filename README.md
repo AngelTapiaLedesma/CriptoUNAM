@@ -219,6 +219,6 @@ También se contempla ampliar la plataforma para administrar múltiples empresas
 
 Proyecto desarrollado para **GOYA HACK · Hackathon UNAM 2026**.
 
-**Track:** Innovación  
+**Track:** Blockchain  
 **Equipo:** 4 integrantes  
 **Estado:** MVP funcional
